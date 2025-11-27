@@ -1,4 +1,4 @@
-## CEM：客户感知分析本体（Customer Experience Management Ontology）
+## CEM：客户服务本体（Customer Experience Management Ontology）
 
 ### 简介
 CEM（客户感知分析本体）是一套面向通信业务场景的语义模型，聚焦客户体验（Customer Experience）相关的对象、事件、工单、网络、产品与终端。CEM 通过本体论方法系统化定义：
