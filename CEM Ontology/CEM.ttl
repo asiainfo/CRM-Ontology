@@ -1,0 +1,1997 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://asiainfo.com/example-owl#> .
+
+##################################
+# 基础抽象类与通用语义（禁止变动）
+##################################
+ex:Entity a owl:Class ; rdfs:subClassOf prov:Entity ; rdfs:label "实体"@zh .
+ex:Object a owl:Class ; rdfs:subClassOf ex:Entity ; rdfs:label "本体对象"@zh .
+ex:Action a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "行动"@zh .
+ex:Logic a owl:Class ; rdfs:subClassOf prov:Activity ; rdfs:label "决策/逻辑函数"@zh .
+ex:hasPrimaryKey a owl:AnnotationProperty ; rdfs:label "主键属性"@zh ; rdfs:comment "在类级别声明该对象的主键数据属性"@zh .
+ex:hasTitle a owl:AnnotationProperty ; rdfs:label "标题属性"@zh ; rdfs:comment "在类级别声明该对象的标题数据属性"@zh .
+ex:bindAction a owl:ObjectProperty ; rdfs:label "本体对象关联行动"@zh ; rdfs:domain ex:Object ; rdfs:range ex:Action .
+ex:bindLogic a owl:ObjectProperty ; rdfs:label "本体对象关联函数"@zh ; rdfs:domain ex:Object ; rdfs:range ex:Logic .
+ex:custom_relation a owl:ObjectProperty ; rdfs:label "自定义对象与对象之间的关系"@zh .
+ex:Parameter a owl:Class ; rdfs:label "函数参数"@zh .
+ex:hasParameter a owl:ObjectProperty ; rdfs:label "有参数"@zh ; rdfs:domain ex:Logic ; rdfs:range ex:Parameter .
+ex:paramName a owl:DatatypeProperty ; rdfs:label "参数名"@zh ; rdfs:domain ex:Parameter ; rdfs:range xsd:string .
+ex:paramType a owl:DatatypeProperty ; rdfs:label "参数类型"@zh ; rdfs:domain ex:Parameter ; rdfs:range xsd:string .
+ex:paramTypeNode a owl:ObjectProperty ; rdfs:label "参数类型节点"@zh ; rdfs:domain ex:Parameter .
+ex:ListType a owl:Class ; rdfs:label "列表类型"@zh .
+ex:DictType a owl:Class ; rdfs:label "字典类型"@zh .
+ex:itemType a owl:DatatypeProperty ; rdfs:label "元素类型"@zh .
+ex:keyType a owl:DatatypeProperty ; rdfs:label "键类型"@zh .
+ex:valueType a owl:DatatypeProperty ; rdfs:label "值类型"@zh .
+ex:isOptional a owl:DatatypeProperty ; rdfs:label "是否可选"@zh ; rdfs:domain ex:Parameter ; rdfs:range xsd:boolean .
+ex:defaultValue a owl:DatatypeProperty ; rdfs:label "默认值"@zh ; rdfs:domain ex:Parameter ; rdfs:range xsd:string .
+ex:ontologyName a owl:Class ; rdfs:label "本体名称"@zh .
+ex:domainAttribute a owl:AnnotationProperty ; rdfs:label "域属性"@zh ; rdfs:comment "指定对象属性的域端使用哪个数据属性建立关联"@zh .
+ex:rangeAttribute a owl:AnnotationProperty ; rdfs:label "值域属性"@zh ; rdfs:comment "指定对象属性的值域端使用哪个数据属性建立关联"@zh .
+ex:hasMiddleObject a owl:ObjectProperty ; rdfs:label "中间对象"@zh ; rdfs:comment "用来描述多对多关系的情况下，两个对象所使用到的中间对象"@zh .
+##################################
+# 本体名称
+##################################
+ex:CEM a ex:ontologyName ;
+  rdfs:label "客户感知分析"@zh .
+
+##################################
+# 可用函数
+##################################
+ex:calculate_customer_satisfaction a ex:Logic ;
+  rdfs:label "计算客户的满意度"@zh ;
+  rdfs:comment """@function_label: 计算客户的满意度
+    根据客户ID与感知分析算法ID，调用指定算法计算该客户的满意度评分。入参：customer_id（str）、perception_id（str）。返回：满意度分数float。用于评估客户体验与服务质量。"""@zh ;
+  ex:hasParameter [ a ex:Parameter ; ex:paramName "customer_id" ; ex:paramType "xsd:string" ; ex:isOptional false ], [ a ex:Parameter ; ex:paramName "perception_id" ; ex:paramType "xsd:string" ; ex:isOptional false ] .
+
+ex:generate_remediation_strategy a ex:Logic ;
+  rdfs:label "生成修复策略"@zh ;
+  rdfs:comment """@function_label: 生成修复策略
+    函数“生成修复策略”用于基于客户低分行为属性列表，生成相应的修复策略。入参包括：customerbehavior_attribute_name_list（低分行为属性名列表，如[web_disp_rate,video_play_succ_rate],你可以从之前的感知分析的算法描述中获取相关信息）。输出为针对该客户与属性的修复方案。"""@zh ;
+  ex:hasParameter [ a ex:Parameter ; ex:paramName "customerbehavior_attribute_name_list" ; ex:paramType "list" ; ex:isOptional false ; ex:paramTypeNode [ a ex:ListType ] ] .
+
+ex:get_network_logs a ex:Logic ;
+  rdfs:label "获取网络工作日志"@zh ;
+  rdfs:comment """@function_label: 获取网络工作日志
+    该函数用于获取指定无线网络的工作日志。输入参数为无线网络ID network_id（字符串），用于唯一标识目标网络。函数通过该ID查询并返回该无线网络的工作日志数据，用于光猫，宽带故障排查、运行状态分析与审计。返回值为该网络的完整或筛选后的日志信息。"""@zh ;
+  ex:hasParameter [ a ex:Parameter ; ex:paramName "network_id" ; ex:paramType "xsd:string" ; ex:isOptional false ] .
+
+ex:is_low_satisfaction a ex:Logic ;
+  rdfs:label "判断是否属于低满意度"@zh ;
+  rdfs:comment """@function_label: 判断是否属于低满意度
+    根据预测模型预测的分数判断是否低满意度。 输入参数参数：score。 返回：bool。"""@zh ;
+  ex:hasParameter [ a ex:Parameter ; ex:paramName "score" ; ex:paramType "xsd:double" ; ex:isOptional false ] .
+
+##################################
+# Action动作定义
+##################################
+ex:assign_order_to_employee a ex:Action ;
+  rdfs:label "分配工单"@zh ;
+  rdfs:comment """@action_label: 分配工单
+    分配工单给指定员工"""@zh ;
+  ex:hasParameter [ a ex:Parameter ; ex:paramName "workorder_id" ; ex:paramType "xsd:string" ; ex:isOptional false ] ,
+                    [ a ex:Parameter ; ex:paramName "employee_id" ; ex:paramType "xsd:string" ; ex:isOptional false ] .
+
+ex:workorder ex:bindAction ex:assign_order_to_employee .
+
+ex:create_work_order a ex:Action ;
+  rdfs:label "创建工单"@zh ;
+  rdfs:comment """@action_label: 创建工单
+    创建不同类型的待指派工单（类型跟随服务类型），根据客户的反馈内容判断是哪一种类型的工单。
+    同时需要根据客户反馈内容，判断工单涉及的感知维度，需要填入对应的perception_id.
+     - perception_id: 'PER002' -> 网优维度，涉及网络优化方向的解决及修复
+     - perception_id: 'PER003' -> 服务维度，涉及线上线下渠道对客时的问题
+     - perception_id: 'PER004' -> 资费维度，涉及产品资费方向的问题
+    创建工单时，如果已经有建议方案，则可以通过advice_content添加进工单中"""@zh ;
+  ex:hasParameter [ a ex:Parameter ; ex:paramName "service_id" ; ex:paramType "xsd:string" ; ex:isOptional false ] ,
+                    [ a ex:Parameter ; ex:paramName "cust_id" ; ex:paramType "xsd:string" ; ex:isOptional false ] ,
+                    [ a ex:Parameter ; ex:paramName "perception_id" ; ex:paramType "xsd:string" ; ex:isOptional false ] ,
+                    [ a ex:Parameter ; ex:paramName "issue_description" ; ex:paramType "xsd:string" ; ex:isOptional false ] ,
+                    [ a ex:Parameter ; ex:paramName "advice_content" ; ex:paramType "xsd:string" ; ex:isOptional true ] .
+
+ex:workorder ex:bindAction ex:create_work_order .
+
+##################################
+# 逻辑函数关联定义 (bindLogic)
+##################################
+ex:remediationstrategy ex:bindLogic ex:generate_remediation_strategy .
+ex:customerbehavior ex:bindLogic ex:calculate_customer_satisfaction .
+
+##################################
+# 对象定义(必须继承ex:Object)
+##################################
+ex:broadbandnetwork a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "宽带网络"@zh ;
+  rdfs:label "broadbandnetwork"@en ;
+  ex:hasPrimaryKey ex:网络ID ;
+  ex:hasTitle ex:光纤长度单位为公里 ;
+  rdfs:comment "宽带网络"@zh .
+
+ex:customer a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "客户"@zh ;
+  rdfs:label "customer"@en ;
+  ex:hasPrimaryKey ex:客户ID ;
+  ex:hasTitle ex:姓名 ;
+  rdfs:comment "客户"@zh .
+
+ex:customerbehavior a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "客户行为"@zh ;
+  rdfs:label "customerbehavior"@en ;
+  ex:hasPrimaryKey ex:客户行为ID ;
+  ex:hasTitle ex:客户ID ;
+  rdfs:comment "客户行为(包含客户的手机号)"@zh .
+
+ex:employee a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "员工"@zh ;
+  rdfs:label "employee"@en ;
+  ex:hasPrimaryKey ex:员工ID ;
+  ex:hasTitle ex:姓名 ;
+  rdfs:comment "员工"@zh .
+
+ex:event a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "客户事件"@zh ;
+  rdfs:label "event"@en ;
+  ex:hasPrimaryKey ex:事件ID ;
+  ex:hasTitle ex:事件类型 ;
+  rdfs:comment "系统接收各种维度的事件"@zh .
+
+ex:packageproduct a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "套餐产品"@zh ;
+  rdfs:label "packageproduct"@en ;
+  ex:hasPrimaryKey ex:产品ID ;
+  ex:hasTitle ex:套餐产品名称 ;
+  rdfs:comment "套餐产品"@zh .
+
+ex:perception a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "感知分析"@zh ;
+  rdfs:label "perception"@en ;
+  ex:hasPrimaryKey ex:感知ID ;
+  ex:hasTitle ex:感知分析算法 ;
+  rdfs:comment "感知"@zh .
+
+ex:perceptionevaluation a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "感知评估"@zh ;
+  rdfs:label "perceptionevaluation"@en ;
+  ex:hasPrimaryKey ex:感知评估ID ;
+  ex:hasTitle ex:评估描述 ;
+  rdfs:comment "感知评估"@zh .
+
+ex:remediationstrategy a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "修复策略"@zh ;
+  rdfs:label "remediationstrategy"@en ;
+  ex:hasPrimaryKey ex:修复策略ID ;
+  ex:hasTitle ex:修复客户行为属性名称 ;
+  rdfs:comment "修复策略，针对客户行为属性中某个指标低进行修复，其中修复策略名称对应的是客户行为的属性。"@zh .
+
+ex:terminal a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "终端"@zh ;
+  rdfs:label "terminal"@en ;
+  ex:hasPrimaryKey ex:终端ID ;
+  ex:hasTitle ex:终端类型 ;
+  rdfs:comment "终端"@zh .
+
+ex:valueaddedproduct a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "增值产品"@zh ;
+  rdfs:label "valueaddedproduct"@en ;
+  ex:hasPrimaryKey ex:产品ID ;
+  ex:hasTitle ex:产品名称 ;
+  rdfs:comment "增值产品"@zh .
+
+ex:wirelessnetwork a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "无线网络"@zh ;
+  rdfs:label "wirelessnetwork"@en ;
+  ex:hasPrimaryKey ex:网络ID ;
+  ex:hasTitle ex:网络ID ;
+  rdfs:comment "无线网络"@zh .
+
+ex:workorder a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "工单"@zh ;
+  rdfs:label "workorder"@en ;
+  ex:hasPrimaryKey ex:工单ID ;
+  ex:hasTitle ex:工单内容 ;
+  rdfs:comment "工单"@zh .
+
+ex:packageproduct_broadbandnetwork_OO a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "packageproduct_broadbandnetwork_OO"@zh ;
+  rdfs:label "packageproduct_broadbandnetwork_OO"@en ;
+  rdfs:comment "packageproduct_broadbandnetwork_OO"@zh .
+
+ex:valueaddedproduct_wirelessnetwork_ND a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "valueaddedproduct_wirelessnetwork_ND"@zh ;
+  rdfs:label "valueaddedproduct_wirelessnetwork_ND"@en ;
+  rdfs:comment "valueaddedproduct_wirelessnetwork_ND"@zh .
+
+ex:customer_valueaddedproduct_RC a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "customer_valueaddedproduct_RC"@zh ;
+  rdfs:label "customer_valueaddedproduct_RC"@en ;
+  rdfs:comment "customer_valueaddedproduct_RC"@zh .
+
+ex:event_workorder_GS a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "event_workorder_GS"@zh ;
+  rdfs:label "event_workorder_GS"@en ;
+  rdfs:comment "event_workorder_GS"@zh .
+
+ex:packageproduct_wirelessnetwork_xJ a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "packageproduct_wirelessnetwork_xJ"@zh ;
+  rdfs:label "packageproduct_wirelessnetwork_xJ"@en ;
+  rdfs:comment "packageproduct_wirelessnetwork_xJ"@zh .
+
+ex:terminal_packageproduct_v3 a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "terminal_packageproduct_v3"@zh ;
+  rdfs:label "terminal_packageproduct_v3"@en ;
+  rdfs:comment "terminal_packageproduct_v3"@zh .
+
+ex:broadbandnetwork_terminal_Ee a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "broadbandnetwork_terminal_Ee"@zh ;
+  rdfs:label "broadbandnetwork_terminal_Ee"@en ;
+  rdfs:comment "broadbandnetwork_terminal_Ee"@zh .
+
+ex:valueaddedproduct_broadbandnetwork_Qx a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "valueaddedproduct_broadbandnetwork_Qx"@zh ;
+  rdfs:label "valueaddedproduct_broadbandnetwork_Qx"@en ;
+  rdfs:comment "valueaddedproduct_broadbandnetwork_Qx"@zh .
+
+ex:workorder_employee_C9 a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "workorder_employee_C9"@zh ;
+  rdfs:label "workorder_employee_C9"@en ;
+  rdfs:comment "workorder_employee_C9"@zh .
+
+ex:terminal_wirelessnetwork_9A a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "terminal_wirelessnetwork_9A"@zh ;
+  rdfs:label "terminal_wirelessnetwork_9A"@en ;
+  rdfs:comment "terminal_wirelessnetwork_9A"@zh .
+
+ex:customer_event_yf a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "customer_event_yf"@zh ;
+  rdfs:label "customer_event_yf"@en ;
+  rdfs:comment "customer_event_yf"@zh .
+
+ex:customer_packageproduct_Ar a owl:Class ;
+  rdfs:subClassOf ex:Object ;
+  rdfs:label "customer_packageproduct_Ar"@zh ;
+  rdfs:label "customer_packageproduct_Ar"@en ;
+  rdfs:comment "customer_packageproduct_Ar"@zh .
+
+##################################
+# 数据属性定义
+# 每个对象的属性里，只能拥有一个primarykey
+##################################
+ex:活跃宽带数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "活跃宽带数"@zh ;
+  rdfs:label "活跃宽带数"@zh .
+
+ex:活跃云产品数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "活跃云产品数"@zh ;
+  rdfs:label "活跃云产品数"@zh .
+
+ex:活跃ITV数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "活跃ITV数"@zh ;
+  rdfs:label "活跃ITV数"@zh .
+
+ex:活跃终端类智家数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "活跃终端类智家数"@zh ;
+  rdfs:label "活跃终端类智家数"@zh .
+
+ex:活跃天翼数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "活跃天翼数"@zh ;
+  rdfs:label "活跃天翼数"@zh .
+
+ex:加包价值档 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "加包价值档"@zh ;
+  rdfs:label "加包价值档"@zh .
+
+ex:年龄 a owl:DatatypeProperty ;
+  rdfs:domain ex:customer ;
+  rdfs:range xsd:int ;
+  rdfs:comment ""@zh ;
+  rdfs:label "年龄"@zh .
+
+ex:感知分析算法 a owl:DatatypeProperty ;
+  rdfs:domain ex:perception ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "感知分析算法"@zh .
+
+ex:12个月内欠费次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "12个月内欠费次数"@zh ;
+  rdfs:label "12个月内欠费次数"@zh .
+
+ex:3个月内欠费次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "3个月内欠费次数"@zh ;
+  rdfs:label "3个月内欠费次数"@zh .
+
+ex:6个月内欠费次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "6个月内欠费次数"@zh ;
+  rdfs:label "6个月内欠费次数"@zh .
+
+ex:月均账单金额 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "月均账单金额"@zh ;
+  rdfs:label "月均账单金额"@zh .
+
+ex:月均流量使用 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "月均流量使用"@zh ;
+  rdfs:label "月均流量使用"@zh .
+
+ex:基站类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:wirelessnetwork ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "基站类型"@zh .
+
+ex:客户行为ID a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "客户行为ID"@zh ;
+  rdfs:label "客户行为ID"@zh .
+
+ex:行为类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "行为类型"@zh ;
+  rdfs:label "行为类型"@zh .
+
+ex:计费周期 a owl:DatatypeProperty ;
+  rdfs:domain ex:packageproduct ;
+  rdfs:range xsd:string ;
+  rdfs:comment "计费周期"@zh ;
+  rdfs:label "计费周期"@zh .
+
+ex:月账期 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "月账期"@zh ;
+  rdfs:label "月账期"@zh .
+
+ex:宽带数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "宽带数"@zh ;
+  rdfs:label "宽带数"@zh .
+
+ex:被叫时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "被叫时长"@zh ;
+  rdfs:label "被叫时长"@zh .
+
+ex:来电名片数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "来电名片数"@zh ;
+  rdfs:label "来电名片数"@zh .
+
+ex:被叫次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "被叫次数"@zh ;
+  rdfs:label "被叫次数"@zh .
+
+ex:主叫次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "主叫次数"@zh ;
+  rdfs:label "主叫次数"@zh .
+
+ex:卡类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "卡类型"@zh ;
+  rdfs:label "卡类型"@zh .
+
+ex:关闭时间 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:date ;
+  rdfs:comment ""@zh ;
+  rdfs:label "关闭时间"@zh .
+
+ex:云产品数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "云产品数"@zh ;
+  rdfs:label "云产品数"@zh .
+
+ex:近3个月投诉次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近3个月投诉次数"@zh ;
+  rdfs:label "近3个月投诉次数"@zh .
+
+ex:6个月内投诉不满意次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "6个月内投诉不满意次数"@zh ;
+  rdfs:label "6个月内投诉不满意次数"@zh .
+
+ex:投诉期间来电次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "投诉期间来电次数"@zh ;
+  rdfs:label "投诉期间来电次数"@zh .
+
+ex:超时投诉期间来电次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "超时投诉期间来电次数"@zh ;
+  rdfs:label "超时投诉期间来电次数"@zh .
+
+ex:近1个月申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近1个月申告次数"@zh ;
+  rdfs:label "近1个月申告次数"@zh .
+
+ex:近2个月申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近2个月申告次数"@zh ;
+  rdfs:label "近2个月申告次数"@zh .
+
+ex:近3个月申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近3个月申告次数"@zh ;
+  rdfs:label "近3个月申告次数"@zh .
+
+ex:近4个月申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近4个月申告次数"@zh ;
+  rdfs:label "近4个月申告次数"@zh .
+
+ex:近5个月申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近5个月申告次数"@zh ;
+  rdfs:label "近5个月申告次数"@zh .
+
+ex:近6个月申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近6个月申告次数"@zh ;
+  rdfs:label "近6个月申告次数"@zh .
+
+ex:6个月内咨询不满意次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "6个月内咨询不满意次数"@zh ;
+  rdfs:label "6个月内咨询不满意次数"@zh .
+
+ex:咨询次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "咨询次数"@zh ;
+  rdfs:label "咨询次数"@zh .
+
+ex:联系方式 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "联系方式"@zh .
+
+ex:工单内容 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "工单内容"@zh .
+
+ex:创建时间 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:date ;
+  rdfs:comment ""@zh ;
+  rdfs:label "创建时间"@zh .
+
+ex:本月平均故障处理时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月平均故障处理时长"@zh ;
+  rdfs:label "本月平均故障处理时长"@zh .
+
+ex:本月通话总时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月通话总时长"@zh ;
+  rdfs:label "本月通话总时长"@zh .
+
+ex:本月主叫通话总时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月主叫通话总时长"@zh ;
+  rdfs:label "本月主叫通话总时长"@zh .
+
+ex:本月投诉不满意次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月投诉不满意次数"@zh ;
+  rdfs:label "本月投诉不满意次数"@zh .
+
+ex:本月在途投诉次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月在途投诉次数"@zh ;
+  rdfs:label "本月在途投诉次数"@zh .
+
+ex:本月在途超时投诉次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月在途超时投诉次数"@zh ;
+  rdfs:label "本月在途超时投诉次数"@zh .
+
+ex:本月投诉次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月投诉次数"@zh ;
+  rdfs:label "本月投诉次数"@zh .
+
+ex:本月客户申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月客户申告次数"@zh ;
+  rdfs:label "本月客户申告次数"@zh .
+
+ex:本月咨询不满意次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月咨询不满意次数"@zh ;
+  rdfs:label "本月咨询不满意次数"@zh .
+
+ex:本月咨询次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月咨询次数"@zh ;
+  rdfs:label "本月咨询次数"@zh .
+
+ex:本月故障申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月故障申告次数"@zh ;
+  rdfs:label "本月故障申告次数"@zh .
+
+ex:本月在途故障工单次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月在途故障工单次数"@zh ;
+  rdfs:label "本月在途故障工单次数"@zh .
+
+ex:本月在途超时故障工单次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月在途超时故障工单次数"@zh ;
+  rdfs:label "本月在途超时故障工单次数"@zh .
+
+ex:本月使用流量 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月使用流量"@zh ;
+  rdfs:label "本月使用流量"@zh .
+
+ex:本月出账收入 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月出账收入"@zh ;
+  rdfs:label "本月出账收入"@zh .
+
+ex:本月重复来电次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月重复来电次数"@zh ;
+  rdfs:label "本月重复来电次数"@zh .
+
+ex:本月重复投诉工单次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月重复投诉工单次数"@zh ;
+  rdfs:label "本月重复投诉工单次数"@zh .
+
+ex:本月重复投诉次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月重复投诉次数"@zh ;
+  rdfs:label "本月重复投诉次数"@zh .
+
+ex:本月重复报障次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月重复报障次数"@zh ;
+  rdfs:label "本月重复报障次数"@zh .
+
+ex:本月不满意来话次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月不满意来话次数"@zh ;
+  rdfs:label "本月不满意来话次数"@zh .
+
+ex:客户标识 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "客户标识"@zh ;
+  rdfs:label "客户标识"@zh .
+
+ex:客户ID a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:customerbehavior ex:terminal ex:customer ex:workorder ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "客户ID"@zh .
+
+ex:customer_id a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:customer_valueaddedproduct_RC ex:customer_event_yf ex:customer_packageproduct_Ar ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "customer_id"@zh .
+
+ex:客户战略分群 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "客户战略分群"@zh ;
+  rdfs:label "客户战略分群"@zh .
+
+ex:客户星级 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "客户星级"@zh ;
+  rdfs:label "客户星级"@zh .
+
+ex:本月RSRP优良率负105低于百分之80的天数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月RSRP优良率负105低于百分之80的天数"@zh ;
+  rdfs:label "本月RSRP优良率负105低于百分之80的天数"@zh .
+
+ex:本月RSRP优良率负115低于百分之80的天数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月RSRP优良率负115低于百分之80的天数"@zh ;
+  rdfs:label "本月RSRP优良率负115低于百分之80的天数"@zh .
+
+ex:所属部门 a owl:DatatypeProperty ;
+  rdfs:domain ex:employee ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "所属部门"@zh .
+
+ex:依赖设备 a owl:DatatypeProperty ;
+  rdfs:domain ex:broadbandnetwork ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "依赖设备"@zh .
+
+ex:评估描述 a owl:DatatypeProperty ;
+  rdfs:domain ex:perceptionevaluation ;
+  rdfs:range xsd:string ;
+  rdfs:comment "评估描述"@zh ;
+  rdfs:label "评估描述"@zh .
+
+ex:事件描述 a owl:DatatypeProperty ;
+  rdfs:domain ex:event ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "事件描述"@zh .
+
+ex:感知分析算法原理描述 a owl:DatatypeProperty ;
+  rdfs:domain ex:perception ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "感知分析算法原理描述"@zh .
+
+ex:教育水平 a owl:DatatypeProperty ;
+  rdfs:domain ex:customer ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "教育水平"@zh .
+
+ex:员工ID a owl:DatatypeProperty ;
+  rdfs:domain ex:employee ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "员工ID"@zh .
+
+ex:employee_id a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder_employee_C9 ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "employee_id"@zh .
+
+ex:感知评估ID a owl:DatatypeProperty ;
+  rdfs:domain ex:perceptionevaluation ;
+  rdfs:range xsd:string ;
+  rdfs:comment "感知评估ID"@zh ;
+  rdfs:label "感知评估ID"@zh .
+
+ex:事件ID a owl:DatatypeProperty ;
+  rdfs:domain ex:event ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "事件ID"@zh .
+
+ex:event_id a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:event_workorder_GS ex:customer_event_yf ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "event_id"@zh .
+
+ex:事件类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:event ;
+  rdfs:range xsd:string ;
+  rdfs:comment """允许值："投诉", "咨询", "故障""""@zh ;
+  rdfs:label "事件类型"@zh .
+
+ex:套餐到期时间 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:date ;
+  rdfs:comment "套餐到期时间"@zh ;
+  rdfs:label "套餐到期时间"@zh .
+
+ex:故障期间来电次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "故障期间来电次数"@zh ;
+  rdfs:label "故障期间来电次数"@zh .
+
+ex:超时故障期间来电次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "超时故障期间来电次数"@zh ;
+  rdfs:label "超时故障期间来电次数"@zh .
+
+ex:故障申告次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "故障申告次数"@zh ;
+  rdfs:label "故障申告次数"@zh .
+
+ex:光纤长度单位为公里 a owl:DatatypeProperty ;
+  rdfs:domain ex:broadbandnetwork ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment ""@zh ;
+  rdfs:label "光纤长度单位为公里"@zh .
+
+ex:固话数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "固话数"@zh ;
+  rdfs:label "固话数"@zh .
+
+ex:本月游戏异常话单总次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月游戏异常话单总次数"@zh ;
+  rdfs:label "本月游戏异常话单总次数"@zh .
+
+ex:本月游戏交互总时延 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月游戏交互总时延"@zh ;
+  rdfs:label "本月游戏交互总时延"@zh .
+
+ex:本月游戏交互时延优良率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月游戏交互时延优良率"@zh ;
+  rdfs:label "本月游戏交互时延优良率"@zh .
+
+ex:感知维度ID a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "感知维度ID"@zh .
+
+ex:网格支局编码 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "网格支局编码"@zh ;
+  rdfs:label "网格支局编码"@zh .
+
+ex:网格支局名称 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "网格支局名称"@zh ;
+  rdfs:label "网格支局名称"@zh .
+
+ex:挂机短信数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "挂机短信数"@zh ;
+  rdfs:label "挂机短信数"@zh .
+
+ex:居住地TOP1驻留小区 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "居住地TOP1驻留小区"@zh ;
+  rdfs:label "居住地TOP1驻留小区"@zh .
+
+ex:居住地TOP2驻留小区 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "居住地TOP2驻留小区"@zh ;
+  rdfs:label "居住地TOP2驻留小区"@zh .
+
+ex:收入水平 a owl:DatatypeProperty ;
+  rdfs:domain ex:customer ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "收入水平"@zh .
+
+ex:建议方案 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "建议方案"@zh .
+
+ex:手机号 a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:customerbehavior ex:wirelessnetwork ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "手机号"@zh .
+
+ex:是否5G套餐 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否5G套餐"@zh ;
+  rdfs:label "是否5G套餐"@zh .
+
+ex:是否非正常挂机用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否非正常挂机用户"@zh ;
+  rdfs:label "是否非正常挂机用户"@zh .
+
+ex:是否活跃用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否活跃用户"@zh ;
+  rdfs:label "是否活跃用户"@zh .
+
+ex:是否协议到期用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否协议到期用户"@zh ;
+  rdfs:label "是否协议到期用户"@zh .
+
+ex:是否套餐资费不匹配 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否套餐资费不匹配"@zh ;
+  rdfs:label "是否套餐资费不匹配"@zh .
+
+ex:是否频繁停机 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否频繁停机"@zh ;
+  rdfs:label "是否频繁停机"@zh .
+
+ex:是否加入融合产品 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否加入融合产品"@zh ;
+  rdfs:label "是否加入融合产品"@zh .
+
+ex:是否高套外溢出 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否高套外溢出"@zh ;
+  rdfs:label "是否高套外溢出"@zh .
+
+ex:是否高饱和高活跃低感知 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否高饱和高活跃低感知"@zh ;
+  rdfs:label "是否高饱和高活跃低感知"@zh .
+
+ex:是否超长通话用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否超长通话用户"@zh ;
+  rdfs:label "是否超长通话用户"@zh .
+
+ex:是否低饱和低活跃用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否低饱和低活跃用户"@zh ;
+  rdfs:label "是否低饱和低活跃用户"@zh .
+
+ex:是否低流量 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否低流量"@zh ;
+  rdfs:label "是否低流量"@zh .
+
+ex:是否低语音 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否低语音"@zh ;
+  rdfs:label "是否低语音"@zh .
+
+ex:是否老旧套餐用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否老旧套餐用户"@zh ;
+  rdfs:label "是否老旧套餐用户"@zh .
+
+ex:是否超套用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否超套用户"@zh ;
+  rdfs:label "是否超套用户"@zh .
+
+ex:是否重复来电用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否重复来电用户"@zh ;
+  rdfs:label "是否重复来电用户"@zh .
+
+ex:是否不限量套餐用户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否不限量套餐用户"@zh ;
+  rdfs:label "是否不限量套餐用户"@zh .
+
+ex:是否零次户 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "是否零次户"@zh ;
+  rdfs:label "是否零次户"@zh .
+
+ex:ITV数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "ITV数"@zh ;
+  rdfs:label "ITV数"@zh .
+
+ex:近3个月均主叫通话时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "近3个月均主叫通话时长"@zh ;
+  rdfs:label "近3个月均主叫通话时长"@zh .
+
+ex:三个月月均出账收入 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "三个月月均出账收入"@zh ;
+  rdfs:label "三个月月均出账收入"@zh .
+
+ex:近3个月均使用流量 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "近3个月均使用流量"@zh ;
+  rdfs:label "近3个月均使用流量"@zh .
+
+ex:近3个月咨询不满意工单数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近3个月咨询不满意工单数"@zh ;
+  rdfs:label "近3个月咨询不满意工单数"@zh .
+
+ex:近3个月不满意工单数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近3个月不满意工单数"@zh ;
+  rdfs:label "近3个月不满意工单数"@zh .
+
+ex:近3个月重复投诉次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近3个月重复投诉次数"@zh ;
+  rdfs:label "近3个月重复投诉次数"@zh .
+
+ex:近3个月重复报障次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "近3个月重复报障次数"@zh ;
+  rdfs:label "近3个月重复报障次数"@zh .
+
+ex:用户最近一次申告原因 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "用户最近一次申告原因"@zh ;
+  rdfs:label "用户最近一次申告原因"@zh .
+
+ex:本地网标识 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "本地网标识"@zh ;
+  rdfs:label "本地网标识"@zh .
+
+ex:天翼主卡套餐资费 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "天翼主卡套餐资费"@zh ;
+  rdfs:label "天翼主卡套餐资费"@zh .
+
+ex:本月最大视频播放卡顿频次 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最大视频播放卡顿频次"@zh ;
+  rdfs:label "本月最大视频播放卡顿频次"@zh .
+
+ex:本月最大视频卡顿时长占比 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最大视频卡顿时长占比"@zh ;
+  rdfs:label "本月最大视频卡顿时长占比"@zh .
+
+ex:月最低消费金额 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "月最低消费金额"@zh ;
+  rdfs:label "月最低消费金额"@zh .
+
+ex:本月最小消息接收成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最小消息接收成功率"@zh ;
+  rdfs:label "本月最小消息接收成功率"@zh .
+
+ex:本月最小消息发送成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最小消息发送成功率"@zh ;
+  rdfs:label "本月最小消息发送成功率"@zh .
+
+ex:本月最小RSRP优良率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最小RSRP优良率"@zh ;
+  rdfs:label "本月最小RSRP优良率"@zh .
+
+ex:本月最小RSRP优良率负115 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最小RSRP优良率负115"@zh ;
+  rdfs:label "本月最小RSRP优良率负115"@zh .
+
+ex:本月最小视频播放成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最小视频播放成功率"@zh ;
+  rdfs:label "本月最小视频播放成功率"@zh .
+
+ex:本月最小网页显示成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最小网页显示成功率"@zh ;
+  rdfs:label "本月最小网页显示成功率"@zh .
+
+ex:本月最小网页响应成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月最小网页响应成功率"@zh ;
+  rdfs:label "本月最小网页响应成功率"@zh .
+
+ex:手机上网时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "手机上网时长"@zh ;
+  rdfs:label "手机上网时长"@zh .
+
+ex:本月RSRP大于等于负105的MR总数目 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月RSRP大于等于负105的MR总数目"@zh ;
+  rdfs:label "本月RSRP大于等于负105的MR总数目"@zh .
+
+ex:本月RSRP大于等于负115的MR总数目 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月RSRP大于等于负115的MR总数目"@zh ;
+  rdfs:label "本月RSRP大于等于负115的MR总数目"@zh .
+
+ex:本月RSRP小于负105的MR总数目 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月RSRP小于负105的MR总数目"@zh ;
+  rdfs:label "本月RSRP小于负105的MR总数目"@zh .
+
+ex:本月RSRP小于负115的MR总数目 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月RSRP小于负115的MR总数目"@zh ;
+  rdfs:label "本月RSRP小于负115的MR总数目"@zh .
+
+ex:本月消息异常话单总次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月消息异常话单总次数"@zh ;
+  rdfs:label "本月消息异常话单总次数"@zh .
+
+ex:本月消息接收成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月消息接收成功率"@zh ;
+  rdfs:label "本月消息接收成功率"@zh .
+
+ex:本月消息发送成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月消息发送成功率"@zh ;
+  rdfs:label "本月消息发送成功率"@zh .
+
+ex:姓名 a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:employee ex:customer ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "姓名"@zh .
+
+ex:入网时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "入网时长"@zh ;
+  rdfs:label "入网时长"@zh .
+
+ex:network_id a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:valueaddedproduct_wirelessnetwork_ND ex:packageproduct_broadbandnetwork_OO ex:valueaddedproduct_broadbandnetwork_Qx ex:terminal_wirelessnetwork_9A ex:broadbandnetwork_terminal_Ee ex:packageproduct_wirelessnetwork_xJ ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "network_id"@zh .
+
+ex:网络ID a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:wirelessnetwork ex:remediationstrategy ex:broadbandnetwork ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "网络ID"@zh .
+
+ex:新装宽带数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "新装宽带数"@zh ;
+  rdfs:label "新装宽带数"@zh .
+
+ex:新装固话数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "新装固话数"@zh ;
+  rdfs:label "新装固话数"@zh .
+
+ex:新装ITV数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "新装ITV数"@zh ;
+  rdfs:label "新装ITV数"@zh .
+
+ex:新装天翼卡数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "新装天翼卡数"@zh ;
+  rdfs:label "新装天翼卡数"@zh .
+
+ex:发生时间 a owl:DatatypeProperty ;
+  rdfs:domain ex:event ;
+  rdfs:range xsd:date ;
+  rdfs:comment ""@zh ;
+  rdfs:label "发生时间"@zh .
+
+ex:开通日期 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:date ;
+  rdfs:comment "开通日期"@zh ;
+  rdfs:label "开通日期"@zh .
+
+ex:运行状态 a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:broadbandnetwork ex:wirelessnetwork ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "运行状态"@zh .
+
+ex:工单类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:string ;
+  rdfs:comment """允许值: "网优", "装维", "万号"。网络质量优化类型的为网优"""@zh ;
+  rdfs:label "工单类型"@zh .
+
+ex:其他权益数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "其他权益数"@zh ;
+  rdfs:label "其他权益数"@zh .
+
+ex:套餐内容 a owl:DatatypeProperty ;
+  rdfs:domain ex:packageproduct ;
+  rdfs:range xsd:string ;
+  rdfs:comment "套餐内容"@zh ;
+  rdfs:label "套餐内容"@zh .
+
+ex:套餐产品名称 a owl:DatatypeProperty ;
+  rdfs:domain ex:packageproduct ;
+  rdfs:range xsd:string ;
+  rdfs:comment "套餐产品名称"@zh ;
+  rdfs:label "套餐产品名称"@zh .
+
+ex:套内包含定向流量 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "套内包含定向流量"@zh ;
+  rdfs:label "套内包含定向流量"@zh .
+
+ex:税前套餐费用 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "税前套餐费用"@zh ;
+  rdfs:label "税前套餐费用"@zh .
+
+ex:实收套餐费用 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "实收套餐费用"@zh ;
+  rdfs:label "实收套餐费用"@zh .
+
+ex:套内包含通用流量 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "套内包含通用流量"@zh ;
+  rdfs:label "套内包含通用流量"@zh .
+
+ex:套内国内语音 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "套内国内语音"@zh ;
+  rdfs:label "套内国内语音"@zh .
+
+ex:付费模式编码 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "付费模式编码"@zh ;
+  rdfs:label "付费模式编码"@zh .
+
+ex:本月缴费总次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月缴费总次数"@zh ;
+  rdfs:label "本月缴费总次数"@zh .
+
+ex:感知ID a owl:DatatypeProperty ;
+  rdfs:domain ex:perception ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "感知ID"@zh .
+
+ex:感知时间 a owl:DatatypeProperty ;
+  rdfs:domain ex:perception ;
+  rdfs:range xsd:date ;
+  rdfs:comment ""@zh ;
+  rdfs:label "感知时间"@zh .
+
+ex:职位 a owl:DatatypeProperty ;
+  rdfs:domain ex:employee ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "职位"@zh .
+
+ex:偏好套餐类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:customer ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "偏好套餐类型"@zh .
+
+ex:价格 a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:valueaddedproduct ex:packageproduct ) ] ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "价格"@zh ;
+  rdfs:label "价格"@zh .
+
+ex:工单优先级 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "工单优先级"@zh .
+
+ex:产品描述 a owl:DatatypeProperty ;
+  rdfs:domain ex:valueaddedproduct ;
+  rdfs:range xsd:string ;
+  rdfs:comment "产品描述"@zh ;
+  rdfs:label "产品描述"@zh .
+
+ex:product_id a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:terminal_packageproduct_v3 ex:packageproduct_wirelessnetwork_xJ ex:customer_packageproduct_Ar ex:valueaddedproduct_broadbandnetwork_Qx ex:customer_valueaddedproduct_RC ex:packageproduct_broadbandnetwork_OO ex:valueaddedproduct_wirelessnetwork_ND ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "product_id"@zh .
+
+ex:产品ID a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:remediationstrategy ex:packageproduct ex:valueaddedproduct ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment "产品ID"@zh ;
+  rdfs:label "产品ID"@zh .
+
+ex:产品实例标识 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "产品实例标识"@zh ;
+  rdfs:label "产品实例标识"@zh .
+
+ex:产品名称 a owl:DatatypeProperty ;
+  rdfs:domain ex:valueaddedproduct ;
+  rdfs:range xsd:string ;
+  rdfs:comment "产品名称"@zh ;
+  rdfs:label "产品名称"@zh .
+
+ex:省份标识 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "省份标识"@zh ;
+  rdfs:label "省份标识"@zh .
+
+ex:地域分布 a owl:DatatypeProperty ;
+  rdfs:domain ex:customer ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "地域分布"@zh .
+
+ex:权益产品数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "权益产品数"@zh ;
+  rdfs:label "权益产品数"@zh .
+
+ex:本月RSRP优良率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月RSRP优良率"@zh ;
+  rdfs:label "本月RSRP优良率"@zh .
+
+ex:本月RSRP优良率负115 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月RSRP优良率负115"@zh ;
+  rdfs:label "本月RSRP优良率负115"@zh .
+
+ex:评估得分 a owl:DatatypeProperty ;
+  rdfs:domain ex:perceptionevaluation ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "评估得分"@zh ;
+  rdfs:label "评估得分"@zh .
+
+ex:负责服务类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:employee ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "负责服务类型"@zh .
+
+ex:短信条数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "短信条数"@zh ;
+  rdfs:label "短信条数"@zh .
+
+ex:事件状态 a owl:DatatypeProperty ;
+  rdfs:domain ex:event ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "事件状态"@zh .
+
+ex:工单状态 a owl:DatatypeProperty ;
+  rdfs:domain ex:workorder ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "工单状态"@zh .
+
+ex:统计月份 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "统计月份"@zh ;
+  rdfs:label "统计月份"@zh .
+
+ex:修复策略说明 a owl:DatatypeProperty ;
+  rdfs:domain ex:remediationstrategy ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "修复策略说明"@zh .
+
+ex:修复策略ID a owl:DatatypeProperty ;
+  rdfs:domain ex:remediationstrategy ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "修复策略ID"@zh .
+
+ex:修复客户行为属性名称 a owl:DatatypeProperty ;
+  rdfs:domain ex:remediationstrategy ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "修复客户行为属性名称"@zh .
+
+ex:副卡数量 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "副卡数量"@zh ;
+  rdfs:label "副卡数量"@zh .
+
+ex:系统处理时间 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:date ;
+  rdfs:comment "系统处理时间"@zh ;
+  rdfs:label "系统处理时间"@zh .
+
+ex:terminal_id a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:terminal_packageproduct_v3 ex:terminal_wirelessnetwork_9A ex:broadbandnetwork_terminal_Ee ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "terminal_id"@zh .
+
+ex:终端ID a owl:DatatypeProperty ;
+  rdfs:domain ex:terminal ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "终端ID"@zh .
+
+ex:终端号 a owl:DatatypeProperty ;
+  rdfs:domain ex:terminal ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "终端号"@zh .
+
+ex:终端价格 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "终端价格"@zh ;
+  rdfs:label "终端价格"@zh .
+
+ex:终端类智家数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "终端类智家数"@zh ;
+  rdfs:label "终端类智家数"@zh .
+
+ex:终端类型 a owl:DatatypeProperty ;
+  rdfs:domain ex:terminal ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "终端类型"@zh .
+
+ex:天翼卡数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "天翼卡数"@zh ;
+  rdfs:label "天翼卡数"@zh .
+
+ex:总欠费金额 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "总欠费金额"@zh ;
+  rdfs:label "总欠费金额"@zh .
+
+ex:当月流量溢出费用 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "当月流量溢出费用"@zh ;
+  rdfs:label "当月流量溢出费用"@zh .
+
+ex:流量包费用 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "流量包费用"@zh ;
+  rdfs:label "流量包费用"@zh .
+
+ex:流量饱和度 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "流量饱和度"@zh ;
+  rdfs:label "流量饱和度"@zh .
+
+ex:不满意来电次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "不满意来电次数"@zh ;
+  rdfs:label "不满意来电次数"@zh .
+
+ex:本月视频异常话单总次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月视频异常话单总次数"@zh ;
+  rdfs:label "本月视频异常话单总次数"@zh .
+
+ex:本月视频下载优良率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月视频下载优良率"@zh ;
+  rdfs:label "本月视频下载优良率"@zh .
+
+ex:本月视频播放成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月视频播放成功率"@zh ;
+  rdfs:label "本月视频播放成功率"@zh .
+
+ex:本月视频停顿恢复时延超过门限的次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月视频停顿恢复时延超过门限的次数"@zh ;
+  rdfs:label "本月视频停顿恢复时延超过门限的次数"@zh .
+
+ex:视频彩铃数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "视频彩铃数"@zh ;
+  rdfs:label "视频彩铃数"@zh .
+
+ex:本月每兆流量视频播放卡顿次数超过门限次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月每兆流量视频播放卡顿次数超过门限次数"@zh ;
+  rdfs:label "本月每兆流量视频播放卡顿次数超过门限次数"@zh .
+
+ex:本月视频播放卡顿总次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月视频播放卡顿总次数"@zh ;
+  rdfs:label "本月视频播放卡顿总次数"@zh .
+
+ex:本月视频播放等待总时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月视频播放等待总时长"@zh ;
+  rdfs:label "本月视频播放等待总时长"@zh .
+
+ex:语音时长 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "语音时长"@zh ;
+  rdfs:label "语音时长"@zh .
+
+ex:当月语音溢出费用 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "当月语音溢出费用"@zh ;
+  rdfs:label "当月语音溢出费用"@zh .
+
+ex:语音饱和度 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "语音饱和度"@zh ;
+  rdfs:label "语音饱和度"@zh .
+
+ex:本月网页异常话单总次数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "本月网页异常话单总次数"@zh ;
+  rdfs:label "本月网页异常话单总次数"@zh .
+
+ex:本月网页显示成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月网页显示成功率"@zh ;
+  rdfs:label "本月网页显示成功率"@zh .
+
+ex:本月访问主流网站的网页显示成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月访问主流网站的网页显示成功率"@zh ;
+  rdfs:label "本月访问主流网站的网页显示成功率"@zh .
+
+ex:本月访问主流网站的网页响应成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月访问主流网站的网页响应成功率"@zh ;
+  rdfs:label "本月访问主流网站的网页响应成功率"@zh .
+
+ex:本月网页响应成功率 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "本月网页响应成功率"@zh ;
+  rdfs:label "本月网页响应成功率"@zh .
+
+ex:感知维度 a owl:DatatypeProperty ;
+  rdfs:domain ex:perception ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "感知维度"@zh .
+
+ex:翼留言数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "翼留言数"@zh ;
+  rdfs:label "翼留言数"@zh .
+
+ex:工作频段 a owl:DatatypeProperty ;
+  rdfs:domain ex:wirelessnetwork ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "工作频段"@zh .
+
+ex:工单ID a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:workorder ex:perceptionevaluation ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment "工单ID"@zh ;
+  rdfs:label "工单ID"@zh .
+
+ex:work_order_id a owl:DatatypeProperty ;
+  rdfs:domain [ a owl:Class ; owl:unionOf ( ex:event_workorder_GS ex:workorder_employee_C9 ) ] ;
+  rdfs:range xsd:string ;
+  rdfs:comment ""@zh ;
+  rdfs:label "work_order_id"@zh .
+
+ex:工作地TOP1驻留小区 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "工作地TOP1驻留小区"@zh ;
+  rdfs:label "工作地TOP1驻留小区"@zh .
+
+ex:工作地TOP2驻留小区 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:string ;
+  rdfs:comment "工作地TOP2驻留小区"@zh ;
+  rdfs:label "工作地TOP2驻留小区"@zh .
+
+ex:优品包数 a owl:DatatypeProperty ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range xsd:int ;
+  rdfs:comment "优品包数"@zh ;
+  rdfs:label "优品包数"@zh .
+
+##################################
+# 关系定义
+# 必须继承ex:custom_relation
+# 有正向关系就需定义一个反向关系
+##################################
+ex:is_linked_to a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:workorder ;
+  rdfs:range ex:customer ;
+  rdfs:label "被关联"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:客户ID ;
+  rdfs:comment ""@zh .
+
+ex:linkedWith a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:customer ;
+  rdfs:range ex:workorder ;
+  rdfs:label "关联"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:客户ID ;
+  rdfs:comment ""@zh .
+
+ex:order a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:customer ;
+  rdfs:range ex:valueaddedproduct ;
+  rdfs:label "订购"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:产品ID ;
+  ex:hasMiddleObject ex:customer_valueaddedproduct_RC ;
+  rdfs:comment ""@zh .
+
+ex:be_ordered a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:valueaddedproduct ;
+  rdfs:range ex:customer ;
+  rdfs:label "被订购"@zh ;
+  ex:domainAttribute ex:产品ID ;
+  ex:rangeAttribute ex:客户ID ;
+  ex:hasMiddleObject ex:customer_valueaddedproduct_RC ;
+  rdfs:comment ""@zh .
+
+ex:depends_on a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:valueaddedproduct ;
+  rdfs:range ex:broadbandnetwork ;
+  rdfs:label "依赖于"@zh ;
+  ex:domainAttribute ex:产品ID ;
+  ex:rangeAttribute ex:网络ID ;
+  ex:hasMiddleObject ex:valueaddedproduct_broadbandnetwork_Qx ;
+  rdfs:comment ""@zh .
+
+ex:support a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:broadbandnetwork ;
+  rdfs:range ex:valueaddedproduct ;
+  rdfs:label "支持"@zh ;
+  ex:domainAttribute ex:网络ID ;
+  ex:rangeAttribute ex:产品ID ;
+  ex:hasMiddleObject ex:valueaddedproduct_broadbandnetwork_Qx ;
+  rdfs:comment ""@zh .
+
+ex:support a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:wirelessnetwork ;
+  rdfs:range ex:valueaddedproduct ;
+  rdfs:label "支持"@zh ;
+  ex:domainAttribute ex:网络ID ;
+  ex:rangeAttribute ex:产品ID ;
+  ex:hasMiddleObject ex:valueaddedproduct_wirelessnetwork_ND ;
+  rdfs:comment ""@zh .
+
+ex:depends_on a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:valueaddedproduct ;
+  rdfs:range ex:wirelessnetwork ;
+  rdfs:label "依赖于"@zh ;
+  ex:domainAttribute ex:产品ID ;
+  ex:rangeAttribute ex:网络ID ;
+  ex:hasMiddleObject ex:valueaddedproduct_wirelessnetwork_ND ;
+  rdfs:comment ""@zh .
+
+ex:isReferencedBy a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:remediationstrategy ;
+  rdfs:range ex:workorder ;
+  rdfs:label "被引用"@zh ;
+  ex:domainAttribute ex:修复策略ID ;
+  ex:rangeAttribute ex:工单ID ;
+  rdfs:comment "资源引用或以其他方式指向其他的资源"@zh .
+
+ex:References a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:workorder ;
+  rdfs:range ex:remediationstrategy ;
+  rdfs:label "引用"@zh ;
+  ex:domainAttribute ex:工单ID ;
+  ex:rangeAttribute ex:修复策略ID ;
+  rdfs:comment "资源引用其他资源"@zh .
+
+ex:use a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:terminal ;
+  rdfs:range ex:wirelessnetwork ;
+  rdfs:label "使用"@zh ;
+  ex:domainAttribute ex:终端ID ;
+  ex:rangeAttribute ex:网络ID ;
+  ex:hasMiddleObject ex:terminal_wirelessnetwork_9A ;
+  rdfs:comment ""@zh .
+
+ex:used a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:wirelessnetwork ;
+  rdfs:range ex:terminal ;
+  rdfs:label "被使用"@zh ;
+  ex:domainAttribute ex:网络ID ;
+  ex:rangeAttribute ex:终端ID ;
+  ex:hasMiddleObject ex:terminal_wirelessnetwork_9A ;
+  rdfs:comment ""@zh .
+
+ex:linkedWith a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:event ;
+  rdfs:range ex:workorder ;
+  rdfs:label "关联"@zh ;
+  ex:domainAttribute ex:事件ID ;
+  ex:rangeAttribute ex:工单ID ;
+  ex:hasMiddleObject ex:event_workorder_GS ;
+  rdfs:comment ""@zh .
+
+ex:is_linked_to a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:workorder ;
+  rdfs:range ex:event ;
+  rdfs:label "被关联"@zh ;
+  ex:domainAttribute ex:工单ID ;
+  ex:rangeAttribute ex:事件ID ;
+  ex:hasMiddleObject ex:event_workorder_GS ;
+  rdfs:comment ""@zh .
+
+ex:support a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:wirelessnetwork ;
+  rdfs:range ex:packageproduct ;
+  rdfs:label "支持"@zh ;
+  ex:domainAttribute ex:网络ID ;
+  ex:rangeAttribute ex:产品ID ;
+  ex:hasMiddleObject ex:packageproduct_wirelessnetwork_xJ ;
+  rdfs:comment ""@zh .
+
+ex:depends_on a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:packageproduct ;
+  rdfs:range ex:wirelessnetwork ;
+  rdfs:label "依赖于"@zh ;
+  ex:domainAttribute ex:产品ID ;
+  ex:rangeAttribute ex:网络ID ;
+  ex:hasMiddleObject ex:packageproduct_wirelessnetwork_xJ ;
+  rdfs:comment ""@zh .
+
+ex:assign a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:workorder ;
+  rdfs:range ex:employee ;
+  rdfs:label "指派"@zh ;
+  ex:domainAttribute ex:工单ID ;
+  ex:rangeAttribute ex:员工ID ;
+  ex:hasMiddleObject ex:workorder_employee_C9 ;
+  rdfs:comment ""@zh .
+
+ex:be_assigned a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:employee ;
+  rdfs:range ex:workorder ;
+  rdfs:label "被指派"@zh ;
+  ex:domainAttribute ex:员工ID ;
+  ex:rangeAttribute ex:工单ID ;
+  ex:hasMiddleObject ex:workorder_employee_C9 ;
+  rdfs:comment ""@zh .
+
+ex:order a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:customer ;
+  rdfs:range ex:packageproduct ;
+  rdfs:label "订购"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:产品ID ;
+  ex:hasMiddleObject ex:customer_packageproduct_Ar ;
+  rdfs:comment ""@zh .
+
+ex:be_ordered a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:packageproduct ;
+  rdfs:range ex:customer ;
+  rdfs:label "被订购"@zh ;
+  ex:domainAttribute ex:产品ID ;
+  ex:rangeAttribute ex:客户ID ;
+  ex:hasMiddleObject ex:customer_packageproduct_Ar ;
+  rdfs:comment ""@zh .
+
+ex:is_found_in a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:customerbehavior ;
+  rdfs:range ex:customer ;
+  rdfs:label "被具有"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:客户ID ;
+  rdfs:comment ""@zh .
+
+ex:have a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:customer ;
+  rdfs:range ex:customerbehavior ;
+  rdfs:label "具有"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:客户ID ;
+  rdfs:comment ""@zh .
+
+ex:bindWith a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:terminal ;
+  rdfs:range ex:packageproduct ;
+  rdfs:label "绑定"@zh ;
+  ex:domainAttribute ex:终端ID ;
+  ex:rangeAttribute ex:产品ID ;
+  ex:hasMiddleObject ex:terminal_packageproduct_v3 ;
+  rdfs:comment ""@zh .
+
+ex:requires a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:packageproduct ;
+  rdfs:range ex:terminal ;
+  rdfs:label "需要"@zh ;
+  ex:domainAttribute ex:产品ID ;
+  ex:rangeAttribute ex:终端ID ;
+  ex:hasMiddleObject ex:terminal_packageproduct_v3 ;
+  rdfs:comment ""@zh .
+
+ex:initiate_ a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:customer ;
+  rdfs:range ex:event ;
+  rdfs:label "发起"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:事件ID ;
+  ex:hasMiddleObject ex:customer_event_yf ;
+  rdfs:comment ""@zh .
+
+ex:be_created a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:event ;
+  rdfs:range ex:customer ;
+  rdfs:label "被创建"@zh ;
+  ex:domainAttribute ex:事件ID ;
+  ex:rangeAttribute ex:客户ID ;
+  ex:hasMiddleObject ex:customer_event_yf ;
+  rdfs:comment ""@zh .
+
+ex:used a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:Target ;
+  rdfs:range ex:valueaddedproduct ;
+  rdfs:label "被使用"@zh ;
+  rdfs:comment ""@zh .
+
+ex:use a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:valueaddedproduct ;
+  rdfs:range ex:Target ;
+  rdfs:label "使用"@zh ;
+  rdfs:comment ""@zh .
+
+ex:used a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:terminal ;
+  rdfs:range ex:broadbandnetwork ;
+  rdfs:label "被使用"@zh ;
+  ex:domainAttribute ex:终端ID ;
+  ex:rangeAttribute ex:网络ID ;
+  ex:hasMiddleObject ex:broadbandnetwork_terminal_Ee ;
+  rdfs:comment ""@zh .
+
+ex:use a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:broadbandnetwork ;
+  rdfs:range ex:terminal ;
+  rdfs:label "使用"@zh ;
+  ex:domainAttribute ex:网络ID ;
+  ex:rangeAttribute ex:终端ID ;
+  ex:hasMiddleObject ex:broadbandnetwork_terminal_Ee ;
+  rdfs:comment ""@zh .
+
+ex:requires a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:packageproduct ;
+  rdfs:range ex:broadbandnetwork ;
+  rdfs:label "需要"@zh ;
+  ex:domainAttribute ex:产品ID ;
+  ex:rangeAttribute ex:网络ID ;
+  ex:hasMiddleObject ex:packageproduct_broadbandnetwork_OO ;
+  rdfs:comment ""@zh .
+
+ex:support a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:broadbandnetwork ;
+  rdfs:range ex:packageproduct ;
+  rdfs:label "支持"@zh ;
+  ex:domainAttribute ex:网络ID ;
+  ex:rangeAttribute ex:产品ID ;
+  ex:hasMiddleObject ex:packageproduct_broadbandnetwork_OO ;
+  rdfs:comment ""@zh .
+
+ex:has a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:customer ;
+  rdfs:range ex:terminal ;
+  rdfs:label "拥有"@zh ;
+  ex:domainAttribute ex:客户ID ;
+  ex:rangeAttribute ex:终端ID ;
+  rdfs:comment ""@zh .
+
+ex:isPartOf a owl:ObjectProperty ;
+  rdfs:subPropertyOf ex:custom_relation ;
+  rdfs:domain ex:terminal ;
+  rdfs:range ex:customer ;
+  rdfs:label "属于"@zh ;
+  ex:domainAttribute ex:终端ID ;
+  ex:rangeAttribute ex:客户ID ;
+  rdfs:comment ""@zh .
