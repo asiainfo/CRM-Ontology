@@ -1,4 +1,4 @@
-## Product_Marketing：产品营销本体（Product Marketing Ontology）
+## PMT：产品营销本体（Product Marketing Ontology）
 
 ### 简介
 Product_Marketing（产品营销本体）是一套面向电信产品营销场景的语义模型，聚焦“产品—用户—渠道—活动”全链路。该本体通过本体论方法系统化定义：
