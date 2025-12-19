@@ -1,7 +1,7 @@
 ## PMT：产品营销本体（Product Marketing Ontology）
 
 ### 简介
-Product_Marketing（产品营销本体）是一套面向电信产品营销场景的语义模型，聚焦“产品—用户—渠道—活动”全链路。该本体通过本体论方法系统化定义：
+Product Marketing Ontology（产品营销本体）是一套面向电信产品营销场景的语义模型，聚焦“产品—用户—渠道—活动”全链路。该本体通过本体论方法系统化定义：
 - 领域对象：营销活动（Campaign）、渠道（ChannelInfo）、渠道接触记录（ContactRecord）、历史营销数据（HistoricalMarketingData）、营销文案（MarketingContent）、产品目录（ProductCatalog）、产品策略/画像（ProductStrategy）、用户基础信息（UserInfo）、用户画像（UserProfile）、用户行为（UserBehavior）等；
 - 核心关系：拥有（ProductCatalog↔ProductStrategy / UserInfo↔UserProfile / UserInfo↔UserBehavior / ProductCatalog↔Campaign / Campaign↔ContactRecord）、属于/被属于（Campaign↔MarketingContent / Campaign↔HistoricalMarketingData / UserProfile↔UserBehavior）、关联（ProductCatalog↔ContactRecord）、引用/被引用（UserBehavior↔ContactRecord / ContactRecord↔ChannelInfo）等；
 - 数据属性：标识与时间分区（活动ID、产品ID、渠道ID、用户ID、日期、分区字段等）、活动与营销效果指标（预算、目标用户数、触达数、转化数、转化率、ROI等）、渠道与文案配置（渠道类型、规则、统计，文案标题/正文/模板变量/适用人群等）、产品与权益属性（价格、合约期、流量/语音资源、权益与会员应用等）、用户基础&画像&行为标签（终端/资费、客群、兴趣偏好、消费与缴费行为等）；
